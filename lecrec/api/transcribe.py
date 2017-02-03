@@ -8,7 +8,9 @@ import wave
 from googleapiclient import discovery
 import httplib2
 from oauth2client.client import GoogleCredentials
+
 from functools import reduce
+from random import random
 
 from api.wav import name_split, wav_split
 
@@ -112,9 +114,24 @@ def _async_transcribe(filepath, filename, start_times, outpath='temp/'):
                     yield alternative['transcript'], next(start_times)
                     break
 
-
 def async_transcribe(filepath, filename, start_times, outpath='temp/'):
     return list(_async_transcribe(filepath, filename, start_times, outpath))
+
+
+def merge(tups, max_stride=15):
+    new_tups = []
+    cur_tup = ('', 0)
+    while tups:
+        if len(tups) == 1:
+            new_tups.append(tups.pop())
+            break
+        if tups[1][1] - tups[0][1] < max_stride:
+            t1 = tups.pop(0)
+            t2 = tups.pop(0)
+            tups.insert(0, (t1[0]+t2[0], t1[1]))
+        else:
+            new_tups.append(tups.pop(0))
+    return new_tups
 
 if __name__ == '__main__':
     filename = 'little_prince.wav'
