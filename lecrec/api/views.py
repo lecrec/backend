@@ -48,11 +48,10 @@ class RecordListCreate(generics.ListCreateAPIView):
     serializer_class = RecordSerializer
 
     def get_queryset(self):
-        print("call!!")
         if self.request.user.is_anonymous:
-            return Record.objects.all()
+            return Record.objects.all().order_by('-id')
         else:
-            return Record.objects.filter(user=self.request.user)
+            return Record.objects.filter(user=self.request.user).order_by('-id')
 
     def perform_create(self, serializer):
         serializer.save(
@@ -63,20 +62,44 @@ class RecordListCreate(generics.ListCreateAPIView):
         from api.transcribe import async_transcribe, merge
         from api.wav import wav_split
         from lecrec.settings import MEDIA_ROOT
-        result = self.create(request, *args, **kwargs)
-        # TODO
-        print(request.data.get('file'))
 
+        if 'voice' in request.FILES:
+            request.data['file'] = request.FILES['voice']
+        if 'title' in request.data:
+            request.data['title'] = request.data['title'].replace('"', '')
+        if 'duration' in request.data:
+            request.data['duration'] = request.data['duration'].replace('"', '')
+        if 'filename' in request.data:
+            request.data['filename'] = request.data['filename'].replace('"', '')
+        if 'file' in request.data:
+            request.data['is_uploaded'] = True
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        # transcribe
         filename = str(request.data.get('file'))
         filepath = MEDIA_ROOT + "/" + filename
-        print(filename)
-        print(filepath)
+
         start_times = wav_split(filepath, filename)
-        tups = async_transcribe(filename, start_times)
-        s = json.dumps(merge(tups))
-        print(s)
-        
-        return result
+
+        tups = async_transcribe(filepath, filename, start_times)
+        tups = merge(tups)
+        result = []
+        for tup in tups:
+            result.append(
+                {'text': tup[0], 'time': tup[1]}
+            )
+
+        record = Record.objects.get(id=serializer.data.get('id'))
+        record.is_converted = True
+        record.text = json.dumps(result)
+        record.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 
 class RecordRetrieveDeleteUpdate(generics.RetrieveUpdateDestroyAPIView):

@@ -20,7 +20,7 @@ from api.wav import name_split, wav_split
 # Application default credentials provided by env variable
 # GOOGLE_APPLICATION_CREDENTIALS
 def get_speech_service():
-    credentials = GoogleCredentials.get_application_default().create_scoped(
+    credentials = GoogleCredentials.from_stream('api/googleapi_auth/LecRec-a4f4c7931558.json').create_scoped(
         ['https://www.googleapis.com/auth/cloud-platform'])
     http = httplib2.Http()
     credentials.authorize(http)
@@ -33,12 +33,12 @@ class MyFilename(str):
     pass
 
 
-def _async_transcribe(filename, start_times, outpath='temp/'):
+def _async_transcribe(filepath, filename, start_times, outpath='temp/'):
     """
     :param files:
     :type files: file pointer
     """
-    wr=wave.open(filename,"r")
+    wr=wave.open(filepath,"r")
     files = [
         MyFilename(
             outpath + name_split(filename, i)) for i in range(len(start_times))
@@ -47,7 +47,6 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
         with open(file, 'rb') as speech:
             # Base64 encode the binary audio file for inclusion in the request.
             file.speech_content = base64.b64encode(speech.read())
-
 
     # [START construct_request]
 
@@ -100,21 +99,23 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
             break
 
     start_times = iter(start_times)
+    wr.close()
+
     # First print the raw json response
     for file in files:
         #print(json.dumps(file.response['response'], indent=2))
 
         # Now print the actual transcriptions
-        for result in file.response['response'].get('results', []):
-            # print('Result:')
-            for alternative in result['alternatives']:
-                yield alternative['transcript'], next(start_times)
-                # print(u'  Alternative: {}'.format(alternative['transcript']))
-                break
+        if not 'response' in file.response:
+            yield '', next(start_times)
+        else:
+            for result in file.response['response'].get('results', []):
+                for alternative in result['alternatives']:
+                    yield alternative['transcript'], next(start_times)
+                    break
 
-
-def async_transcribe(filename, start_times, outpath='temp/'):
-    return list(_async_transcribe(filename, start_times, outpath))
+def async_transcribe(filepath, filename, start_times, outpath='temp/'):
+    return list(_async_transcribe(filepath, filename, start_times, outpath))
 
 
 def merge(tups, max_stride=15):
