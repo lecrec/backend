@@ -17,7 +17,7 @@ from api.wav import name_split, wav_split
 # Application default credentials provided by env variable
 # GOOGLE_APPLICATION_CREDENTIALS
 def get_speech_service():
-    credentials = GoogleCredentials.get_application_default().create_scoped(
+    credentials = GoogleCredentials.from_stream('/Users/Park/Projects/lecrec/backend/lecrec/api/googleapi_auth/LecRec-a4f4c7931558.json').create_scoped(
         ['https://www.googleapis.com/auth/cloud-platform'])
     http = httplib2.Http()
     credentials.authorize(http)
@@ -101,12 +101,14 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
         #print(json.dumps(file.response['response'], indent=2))
 
         # Now print the actual transcriptions
-        for result in file.response['response'].get('results', []):
-            # print('Result:')
-            for alternative in result['alternatives']:
-                yield alternative['transcript'], next(start_times)
-                # print(u'  Alternative: {}'.format(alternative['transcript']))
-                break
+        if not 'response' in file.response:
+            yield '', next(start_times)
+        else:
+            for result in file.response['response'].get('results', []):
+                for alternative in result['alternatives']:
+                    yield alternative['transcript'], next(start_times)
+                    break
+
 
 def async_transcribe(filename, start_times, outpath='temp/'):
     return list(_async_transcribe(filename, start_times, outpath))

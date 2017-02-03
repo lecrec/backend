@@ -48,11 +48,10 @@ class RecordListCreate(generics.ListCreateAPIView):
     serializer_class = RecordSerializer
 
     def get_queryset(self):
-        print("call!!")
         if self.request.user.is_anonymous:
-            return Record.objects.all()
+            return Record.objects.all().order_by('-id')
         else:
-            return Record.objects.filter(user=self.request.user)
+            return Record.objects.filter(user=self.request.user).order_by('-id')
 
     def perform_create(self, serializer):
         serializer.save(
@@ -72,6 +71,8 @@ class RecordListCreate(generics.ListCreateAPIView):
             request.data['duration'] = request.data['duration'].replace('"', '')
         if 'filename' in request.data:
             request.data['filename'] = request.data['filename'].replace('"', '')
+        if 'file' in request.data:
+            request.data['is_uploaded'] = True
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -88,10 +89,11 @@ class RecordListCreate(generics.ListCreateAPIView):
         result = []
         for tup in tups:
             result.append(
-                {'time': tup[1], 'text': tup[0]}
+                {'text': tup[0], 'time': tup[1]}
             )
 
         record = Record.objects.get(id=serializer.data.get('id'))
+        record.is_converted = True
         record.text = json.dumps(result)
         record.save()
 
