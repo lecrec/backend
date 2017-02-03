@@ -10,4 +10,4 @@
  ```
  
 # LICENSE
- - [MIT](https://github.com/lecrec/lecrec-android/blob/master/LICENSE)
+ - [MIT](https://github.com/lecrec/backend/blob/master/LICENSE)
