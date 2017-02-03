@@ -59,8 +59,15 @@ class RecordListCreate(generics.ListCreateAPIView):
         )
 
     def post(self, request, *args, **kwargs):
+        if 'voice' in request.FILES:
+            request.data['file'] = request.FILES['voice']
+        if 'title' in request.data:
+            request.data['title'] = request.data['title'].replace('"', '')
+        if 'duration' in request.data:
+            request.data['duration'] = request.data['duration'].replace('"', '')
+        if 'filename' in request.data:
+            request.data['filename'] = request.data['filename'].replace('"', '')
 
-        # TODO
         print(request.data.get('file'))
         # HERE
 

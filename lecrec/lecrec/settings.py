@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'api',
 ]
 
@@ -60,6 +61,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'lecrec.urls'
@@ -130,7 +133,13 @@ USE_TZ = True
 # CORS
 
 CORS_ORIGIN_WHITELIST = (
-    'localhost:8080',
+    '*',
+    'localhost',
+    'localhost:3000',
+    '192.168.43.196',
+    '192.168.43.180',
+    '192.168.43.196:3000',
+    '192.168.43.180:3000',
 )
 
 REST_FRAMEWORK = {
