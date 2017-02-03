@@ -31,12 +31,12 @@ class MyFilename(str):
     pass
 
 
-def _async_transcribe(filename, start_times, outpath='temp/'):
+def _async_transcribe(filepath, filename, start_times, outpath='temp/'):
     """
     :param files:
     :type files: file pointer
     """
-    wr=wave.open(filename,"r")
+    wr=wave.open(filepath,"r")
     files = [
         MyFilename(
             outpath + name_split(filename, i)) for i in range(len(start_times))
@@ -45,7 +45,6 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
         with open(file, 'rb') as speech:
             # Base64 encode the binary audio file for inclusion in the request.
             file.speech_content = base64.b64encode(speech.read())
-
 
     # [START construct_request]
 
@@ -98,6 +97,8 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
             break
 
     start_times = iter(start_times)
+    wr.close()
+
     # First print the raw json response
     for file in files:
         #print(json.dumps(file.response['response'], indent=2))
@@ -112,8 +113,8 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
                     break
 
 
-def async_transcribe(filename, start_times, outpath='temp/'):
-    return list(_async_transcribe(filename, start_times, outpath))
+def async_transcribe(filepath, filename, start_times, outpath='temp/'):
+    return list(_async_transcribe(filepath, filename, start_times, outpath))
 
 if __name__ == '__main__':
     filename = 'little_prince.wav'

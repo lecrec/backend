@@ -84,7 +84,7 @@ class RecordListCreate(generics.ListCreateAPIView):
         filepath = MEDIA_ROOT + "/" + filename
 
         start_times = wav_split(filepath, filename)
-        tups = async_transcribe(filename, start_times)
+        tups = async_transcribe(filepath, filename, start_times)
 
         result = []
         for tup in tups:
