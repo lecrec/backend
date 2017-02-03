@@ -60,7 +60,7 @@ class RecordListCreate(generics.ListCreateAPIView):
         )
 
     def post(self, request, *args, **kwargs):
-        from api.transcribe import async_transcribe
+        from api.transcribe import async_transcribe, merge
         from api.wav import wav_split
         from lecrec.settings import MEDIA_ROOT
         result = self.create(request, *args, **kwargs)
@@ -73,7 +73,7 @@ class RecordListCreate(generics.ListCreateAPIView):
         print(filepath)
         start_times = wav_split(filepath, filename)
         tups = async_transcribe(filename, start_times)
-        s = json.dumps(tups)
+        s = json.dumps(merge(tups))
         print(s)
         
         return result
