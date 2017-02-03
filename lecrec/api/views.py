@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from api.serializers import RecordSerializer, UserSerializer
 from api.models import Record
 from django.contrib.auth.models import User
+import json
 
 
 class UserGetOrCreate(generics.CreateAPIView):
@@ -59,12 +60,23 @@ class RecordListCreate(generics.ListCreateAPIView):
         )
 
     def post(self, request, *args, **kwargs):
-
+        from api.transcribe import async_transcribe
+        from api.wav import wav_split
+        from lecrec.settings import MEDIA_ROOT
+        result = self.create(request, *args, **kwargs)
         # TODO
         print(request.data.get('file'))
-        # HERE
 
-        return self.create(request, *args, **kwargs)
+        filename = str(request.data.get('file'))
+        filepath = MEDIA_ROOT + "/" + filename
+        print(filename)
+        print(filepath)
+        start_times = wav_split(filepath, filename)
+        tups = async_transcribe(filename, start_times)
+        s = json.dumps(tups)
+        print(s)
+        
+        return result
 
 
 class RecordRetrieveDeleteUpdate(generics.RetrieveUpdateDestroyAPIView):

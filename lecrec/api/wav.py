@@ -2,8 +2,8 @@ import wave
 import tempfile
 import os
 
-def wav_split(file_name, outpath='temp/'):
-    wr=wave.open(file_name,"r")
+def wav_split(filepath, filename, outpath='temp/'):
+    wr=wave.open(filepath,"r")
     b=wr.readframes(wr.getframerate()*10800)
     j=0
     start_time=0
@@ -67,14 +67,14 @@ def wav_split(file_name, outpath='temp/'):
     else:
         start_list.append(wr.getnframes())
     bytes_arr=bytearray(b)
-    spliter(file_name, start_list, wr, bytes_arr, outpath=outpath)
+    spliter(filename, start_list, wr, bytes_arr, outpath=outpath)
     return time_list
 
-def spliter(file_name, start_list, wr, bytes_arr, outpath):
+def spliter(filename, start_list, wr, bytes_arr, outpath):
     if not os.path.exists(outpath):
         os.mkdir(outpath)
     for i in range(len(start_list)-1):
-        wav_file=wave.open(outpath + name_split(file_name, i), "w")
+        wav_file=wave.open(outpath + name_split(filename, i), "w")
         frame_num=start_list[i+1]-start_list[i]
         wav_file.setnchannels(wr.getnchannels())
         wav_file.setsampwidth(wr.getsampwidth())

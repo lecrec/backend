@@ -9,7 +9,7 @@ import httplib2
 from oauth2client.client import GoogleCredentials
 from functools import reduce
 
-from wav import name_split, wav_split
+from api.wav import name_split, wav_split
 
 # [START authenticating]
 
@@ -37,7 +37,7 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
     """
     files = [
         MyFilename(
-            outpath + name_split(filename,i)) for i in range(len(start_times))
+            outpath + name_split(filename, i)) for i in range(len(start_times))
         ]
     for file in files:
         with open(file, 'rb') as speech:
@@ -88,8 +88,9 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
             file.response = file.service_request.execute()
 
             if 'done' in file.response and file.response['done']:
-                print(idx, 'done')
-                done[idx] = True
+                if not done[idx]:
+                    print(idx, 'done')
+                    done[idx] = True
 
         if reduce(lambda a,b: a and b, done, True):
             break
@@ -105,7 +106,7 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
             for alternative in result['alternatives']:
                 yield alternative['transcript'], next(start_times)
                 # print(u'  Alternative: {}'.format(alternative['transcript']))
-                continue
+                break
 
 def async_transcribe(filename, start_times, outpath='temp/'):
     return list(_async_transcribe(filename, start_times, outpath))
