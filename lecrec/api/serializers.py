@@ -31,7 +31,7 @@ class RecordSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'user', 'title', 'text', 'text_json',
             'filename', 'file', 'duration', 'datetime',
-            'is_uploaded', 'is_converted',
+            'is_korean', 'is_uploaded', 'is_converted',
         )
 
     def get_text_json(self, obj):
