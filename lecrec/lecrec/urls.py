@@ -17,11 +17,14 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
-
+from rest_framework_jwt.views import obtain_jwt_token
+from api.views import CreateUser
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('api.urls', namespace='api')),
+    url(r'^api-token-auth/', obtain_jwt_token),
+    url(r'^user/', CreateUser.as_view())
 ]
 
 
