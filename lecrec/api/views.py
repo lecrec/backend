@@ -47,12 +47,24 @@ class RecordListCreate(generics.ListCreateAPIView):
     serializer_class = RecordSerializer
 
     def get_queryset(self):
-        return Record.objects.all()
+        print("call!!")
+        if self.request.user.is_anonymous:
+            return Record.objects.all()
+        else:
+            return Record.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(
             user=self.request.user,
         )
+
+    def post(self, request, *args, **kwargs):
+
+        # TODO
+        print(request.data.get('file'))
+        # HERE
+
+        return self.create(request, *args, **kwargs)
 
 
 class RecordRetrieveDeleteUpdate(generics.RetrieveUpdateDestroyAPIView):

@@ -10,5 +10,12 @@ class Record(models.Model):
     file = models.FileField(verbose_name='File')
     text = models.TextField(verbose_name='Text', default=None, null=True, blank=True)
 
+    is_uploaded = models.BooleanField(default=False)
+    is_converted = models.BooleanField(default=False)
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    @property
+    def datetime(self):
+        return self.created.strftime("%Y-%m-%d %-I:%-M%p")
