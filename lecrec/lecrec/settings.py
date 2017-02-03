@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -36,7 +37,7 @@ SECRET_KEY = 'fxxejq)bnkv7jj)4&tb92$vu&!go4#b)ka2yu_8$ij@3f0@o7g'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.43.180', '211.249.62.164', ]
 
 # Application definition
 
@@ -134,7 +135,7 @@ CORS_ORIGIN_WHITELIST = (
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),
     #'DEFAULT_AUTHENTICATION_CLASSES': [],
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -142,4 +143,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
+}
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),
 }
