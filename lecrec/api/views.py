@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from api.serializers import RecordSerializer, UserSerializer
 from api.models import Record
 from django.contrib.auth.models import User
+import json
 
 
 class UserGetOrCreate(generics.CreateAPIView):
@@ -59,6 +60,10 @@ class RecordListCreate(generics.ListCreateAPIView):
         )
 
     def post(self, request, *args, **kwargs):
+        from api.transcribe import async_transcribe
+        from api.wav import wav_split
+        from lecrec.settings import MEDIA_ROOT
+
         if 'voice' in request.FILES:
             request.data['file'] = request.FILES['voice']
         if 'title' in request.data:
@@ -68,10 +73,29 @@ class RecordListCreate(generics.ListCreateAPIView):
         if 'filename' in request.data:
             request.data['filename'] = request.data['filename'].replace('"', '')
 
-        print(request.data.get('file'))
-        # HERE
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
 
-        return self.create(request, *args, **kwargs)
+        # transcribe
+        filename = str(request.data.get('file'))
+        filepath = MEDIA_ROOT + "/" + filename
+
+        start_times = wav_split(filepath, filename)
+        tups = async_transcribe(filename, start_times)
+
+        result = []
+        for tup in tups:
+            result.append(
+                {'time': tup[1], 'text': tup[0]}
+            )
+
+        record = Record.objects.get(id=serializer.data.get('id'))
+        record.text = json.dumps(result)
+        record.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class RecordRetrieveDeleteUpdate(generics.RetrieveUpdateDestroyAPIView):
