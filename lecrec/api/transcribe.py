@@ -3,6 +3,7 @@ import argparse
 import base64
 import json
 import time
+import wave
 
 from googleapiclient import discovery
 import httplib2
@@ -35,6 +36,7 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
     :param files:
     :type files: file pointer
     """
+    wr=wave.open(filename,"r")
     files = [
         MyFilename(
             outpath + name_split(filename, i)) for i in range(len(start_times))
@@ -56,7 +58,7 @@ def _async_transcribe(filename, start_times, outpath='temp/'):
                     # There are a bunch of config options you can specify. See
                     # https://goo.gl/KPZn97 for the full list.
                     'encoding': 'LINEAR16',  # raw 16-bit signed LE samples
-                    'sampleRate': 16000,  # 16 khz
+                    'sampleRate': wr.getframerate(),  # 16 khz
                     # See http://g.co/cloud/speech/docs/languages for a list of
                     # supported languages.
                     'languageCode': 'ko-KR',  # a BCP-47 language tag
