@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from rest_framework import generics, permissions
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -6,6 +7,9 @@ from api.serializers import RecordSerializer, UserSerializer
 from api.models import Record
 from django.contrib.auth.models import User
 import json
+from lecrec.settings import MEDIA_ROOT
+import requests
+from django.views.decorators.csrf import csrf_exempt
 
 
 class UserGetOrCreate(generics.CreateAPIView):
@@ -59,10 +63,6 @@ class RecordListCreate(generics.ListCreateAPIView):
         )
 
     def post(self, request, *args, **kwargs):
-        from api.transcribe import async_transcribe, merge
-        from api.wav import wav_split
-        from lecrec.settings import MEDIA_ROOT
-
         if 'voice' in request.FILES:
             request.data['file'] = request.FILES['voice']
         if 'title' in request.data:
@@ -79,27 +79,13 @@ class RecordListCreate(generics.ListCreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        # transcribe
-        filename = str(request.data.get('file'))
-        filepath = MEDIA_ROOT + "/" + filename
-
-        start_times = wav_split(filepath, filename)
-
-        tups = async_transcribe(filepath, filename, start_times)
-        tups = merge(tups)
-        result = []
-        for tup in tups:
-            result.append(
-                {'text': tup[0], 'time': tup[1]}
-            )
-
-        record = Record.objects.get(id=serializer.data.get('id'))
-        record.is_converted = True
-        record.text = json.dumps(result)
-        record.save()
+        payload = {"filename": str(request.data.get('file')), "record_id": serializer.data.get('id')}
+        try:
+            requests.post('http://192.168.43.180:8000/api/records/converter', data=payload, timeout=1)
+        except:
+            pass
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
 
 
 class RecordRetrieveDeleteUpdate(generics.RetrieveUpdateDestroyAPIView):
@@ -108,3 +94,31 @@ class RecordRetrieveDeleteUpdate(generics.RetrieveUpdateDestroyAPIView):
 
     def put(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
+
+
+@csrf_exempt
+def record_converter(request):
+    from api.transcribe import async_transcribe, merge
+    from api.wav import wav_split
+
+    filename = request.POST.get('filename', None)
+    record_id = request.POST.get('record_id', None)
+
+    if not filename or not record_id:
+        return HttpResponse('fail')
+
+    filepath = MEDIA_ROOT + "/" + filename
+
+    start_times = wav_split(filepath, filename)
+    tups = async_transcribe(filepath, filename, start_times)
+    tups = merge(tups)
+    result = []
+    for tup in tups:
+        result.append({'text': tup[0], 'time': tup[1]})
+
+    record = Record.objects.get(id=record_id)
+    record.is_converted = True
+    record.text = json.dumps(result)
+    record.save()
+
+    return HttpResponse('success')
